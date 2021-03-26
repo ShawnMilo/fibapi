@@ -7,13 +7,13 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 )
 
 var mu sync.RWMutex
 var highCount int
 var belowCache = make(map[int]int)
 
+// Force the generator to reach the desired level.
 func reachCount(i int) {
 	for v := range fibChan {
 		if v.ID >= i {
@@ -27,7 +27,6 @@ func byOrdinal(i int) (Value, error) {
 		return ordinalFromDB(i)
 	}
 	reachCount(i)
-	time.Sleep(time.Second)
 	return byOrdinal(i)
 }
 

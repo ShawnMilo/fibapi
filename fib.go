@@ -8,6 +8,7 @@ type Value struct {
 	Count int   `json:"count"`
 }
 
+// Don't start Fibonacci at 1, 1 if a previous instance has cached it.
 func seedFib() (int, int64, int64, error) {
 	var prev, current int64
 	var count int
@@ -36,6 +37,7 @@ func seedFib() (int, int64, int64, error) {
 	return count, prev, current, err
 }
 
+// Generate the Fibonacci sequence on demand.
 func fib() {
 	count, prev, current, err := seedFib()
 	if err != nil || count == 0 {
@@ -61,6 +63,7 @@ func fib() {
 	}
 }
 
+// Check how far we are into the cycle.
 func countReached(i int) bool {
 	mu.RLock()
 	defer mu.RUnlock()

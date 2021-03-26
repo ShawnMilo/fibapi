@@ -16,6 +16,7 @@ var dbConn = "postgres://postgres:%s@localhost:%s/postgres?sslmode=disable"
 
 var db *sql.DB
 
+// Initialize and test database connection.
 func init() {
 	connStr := fmt.Sprintf(dbConn, os.Getenv("DB_PASSWORD"), os.Getenv("DB_PORT"))
 	conn, err := sql.Open("postgres", connStr)
@@ -36,6 +37,7 @@ func init() {
 	log.Fatal("could not ping database")
 }
 
+// Create database table if it doesn't already exist.
 func initializeDB() {
 	row := db.QueryRow("SELECT id FROM fibonacci LIMIT 1")
 	var i int
@@ -53,6 +55,7 @@ func initializeDB() {
 
 }
 
+// Store Fibonacci data in database.
 func memoize(v Value) {
 	mu.Lock()
 	defer mu.Unlock()
@@ -64,6 +67,7 @@ func memoize(v Value) {
 	highCount = v.ID
 }
 
+// Ignore errors due to attempting to cache an already-cached value.
 func isDuplicate(err error) bool {
 	pe, ok := err.(*pq.Error)
 	if !ok {
