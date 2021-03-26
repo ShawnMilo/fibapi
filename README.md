@@ -22,3 +22,4 @@ go build
 ## Notes
 
 * Design decisions favor simplicity whenever it would not detract from performance.
+* Use of the `postgres` user and database are for convenience in this toy app.
