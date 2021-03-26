@@ -8,3 +8,9 @@ The API has two functions:
 ## Testing instructions:
 
 Run `./test.sh` (Docker required).
+
+## Build
+
+```
+go build
+```
