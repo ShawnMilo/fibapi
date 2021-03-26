@@ -29,7 +29,7 @@ trap cleanup INT TERM EXIT
 sudo docker run -d --name fibdb -e POSTGRES_PASSWORD=$DB_PASSWORD -p $DB_PORT:5432 postgres:13.2-alpine >>/dev/null
 wait_for_port $DB_PORT
 
-go build -o /tmp/potato main.go || exit
+go build -o /tmp/potato || exit
 DB_PASSWORD=$DB_PASSWORD DB_PORT=$DB_PORT /tmp/potato &
 wait_for_port $API_PORT
 
