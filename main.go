@@ -55,7 +55,6 @@ func initializeDB() {
 	var i int
 	err := row.Scan(&i)
 	if err == nil {
-		log.Print("DB already existed")
 		return
 	}
 	log.Print("attempting to initialize db")
@@ -68,14 +67,45 @@ func initializeDB() {
 
 }
 
-func fib() {
-	count := 1
-	var prev int64
-	current := int64(1)
+func seedFib() (int, int64, int64, error) {
+	var prev, current int64
+	var count int
 
-	v := Value{ID: count, Num: current}
-	memoize(v)
-	fibChan <- v
+	rows, err := db.Query("SELECT id, val FROM fibonacci ORDER BY id DESC LIMIT 2")
+	if err != nil {
+		return count, prev, current, err
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		return count, prev, current, err
+	}
+
+	err = rows.Scan(&count, &prev)
+	if err != nil {
+		return count, prev, current, err
+	}
+
+	if !rows.Next() {
+		return count, prev, current, err
+	}
+
+	var temp int
+	err = rows.Scan(&temp, &current)
+	return count, prev, current, err
+}
+
+func fib() {
+	count, prev, current, err := seedFib()
+	if err != nil || count == 0 {
+		count = 1
+		current = int64(1)
+
+		v := Value{ID: count, Num: current}
+		memoize(v)
+		fibChan <- v
+	}
+	log.Printf("starting: %d, %d, %d", count, prev, current)
 
 	for {
 		count++
@@ -124,7 +154,6 @@ func belowFromDB(below int) (Value, error) {
 	row := db.QueryRow("SELECT COUNT(id) FROM fibonacci WHERE val < $1", below)
 	var i int
 	err := row.Scan(&i)
-
 	if err == nil {
 		mu.Lock()
 		belowCache[below] = i
