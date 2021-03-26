@@ -37,26 +37,42 @@ func init() {
 	log.Fatal("could not ping database")
 }
 
-// Create database table if it doesn't already exist.
+// Create database tables if they don't already exist.
 func initializeDB() {
+	initializeFib()
+	initializeBelow()
+}
+
+func initializeFib() {
 	row := db.QueryRow("SELECT id FROM fibonacci LIMIT 1")
 	var i int
 	err := row.Scan(&i)
 	if err == nil {
 		return
 	}
-	log.Print("attempting to initialize db")
 	_, err = db.Exec("CREATE TABLE fibonacci (id INTEGER PRIMARY KEY, val INTEGER)")
 	if err != nil {
 		log.Printf("table creation failed: %s", err)
 	} else {
 		log.Println("created table OK")
 	}
+}
 
+func initializeBelow() {
+	row := db.QueryRow("SELECT id FROM below LIMIT 1")
+	var i int
+	err := row.Scan(&i)
+	if err == nil {
+		return
+	}
+	_, err = db.Exec("CREATE TABLE below (id INTEGER PRIMARY KEY, count INTEGER)")
+	if err != nil {
+		log.Printf("table creation failed: %s", err)
+	}
 }
 
 // Store Fibonacci data in database.
-func memoize(v Value) {
+func memoizeFib(v Value) {
 	mu.Lock()
 	defer mu.Unlock()
 	_, err := db.Exec("INSERT INTO fibonacci (id, val) VALUES ($1, $2)", v.ID, v.Num)
@@ -65,6 +81,15 @@ func memoize(v Value) {
 		return
 	}
 	highCount = v.ID
+}
+
+// Store "below" data in database.
+func memoizeBelow(num int, count int) {
+	_, err := db.Exec("INSERT INTO below (id, count) VALUES ($1, $2)", num, count)
+	if err != nil && !isDuplicate(err) {
+		log.Printf("failed to write to DB: %s", err)
+		return
+	}
 }
 
 // Ignore errors due to attempting to cache an already-cached value.
@@ -85,21 +110,29 @@ func ordinalFromDB(id int) (Value, error) {
 	return Value{ID: i, Num: num}, err
 }
 
+func belowFromCache(id int) (int, bool) {
+	row := db.QueryRow("SELECT count FROM below WHERE id = $1", id)
+	var i int
+	var ok bool
+
+	err := row.Scan(&i)
+	if err == nil {
+		ok = true
+	}
+	return i, ok
+}
+
 func belowFromDB(below int) (Value, error) {
-	mu.RLock()
-	c, found := belowCache[below]
-	mu.RUnlock()
+	c, found := belowFromCache(below)
 	if found {
-		log.Printf("%d from below cache", below)
 		return Value{Count: c}, nil
 	}
 	row := db.QueryRow("SELECT COUNT(id) FROM fibonacci WHERE val < $1", below)
 	var i int
 	err := row.Scan(&i)
 	if err == nil {
-		mu.Lock()
-		belowCache[below] = i
-		mu.Unlock()
+		memoizeBelow(below, i)
 	}
+
 	return Value{Count: i}, err
 }

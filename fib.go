@@ -45,7 +45,7 @@ func fib() {
 		current = int64(1)
 
 		v := Value{ID: count, Num: current}
-		memoize(v)
+		memoizeFib(v)
 		fibChan <- v
 	}
 
@@ -54,9 +54,9 @@ func fib() {
 		last := current
 		current += prev
 		v := Value{ID: count, Num: current}
-		memoize(v)
+		memoizeFib(v)
 		if v.ID == 4 {
-			memoize(v)
+			memoizeFib(v)
 		}
 		fibChan <- v
 		prev = last
