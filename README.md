@@ -18,3 +18,7 @@ Docker is required.
 ```
 go build
 ```
+
+## Notes
+
+* Design decisions favor simplicity whenever it would not detract from performance.
